@@ -15,6 +15,11 @@ const options = {
       type: 'string',
       short: 't'
    },
+   gates: {
+      type: 'boolean',
+      short: 'g',
+      default: false
+   }
 }
 
 const { values } = parseArgs({ args: process.argv.slice(2), options });
@@ -67,14 +72,22 @@ function play(){
       setInterval(() => {
          let byte = fileBytes[counter ++ % fileBytes.length];
          const idx = byte % 64;
-         if (map[idx] === 0) {
-            map[idx] = 1;
-            console.log('Note on', idx + 36);
-            port.noteOn(1, idx + 36).then(resolve);
-         } else {
-            map[idx] = 0;
-            console.log('Note off', idx + 36);
-            port.noteOff(1, idx + 36).then(resolve);
+         if (values.gates) {
+            if (map[idx] === 0) {
+               map[idx] = 1;
+               console.log('Gate on', idx + 36);
+               port.noteOn(1, idx + 36).then(resolve);
+            } else {
+               map[idx] = 0;
+               console.log('Gate off', idx + 36);
+               port.noteOff(1, idx + 36).then(resolve);
+            }
+         } else{
+            console.log('Trigger', idx + 36);
+            port.noteOn(1, idx + 36)
+            .wait( (60 * 1000) / tempo / 16 )
+            .noteOff(1, idx + 36)
+            .then(resolve);
          }
       }, (60 * 1000) / tempo / 8 );
    });
