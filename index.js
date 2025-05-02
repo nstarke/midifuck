@@ -90,7 +90,7 @@ function play(){
          } else{
             console.log('Trigger', idx + 36);
             port.noteOn(CHANNEL, idx + 36)
-            .wait( (60 * 1000) / tempo / 16 )
+            .wait((((60 * 1000) / tempo) / 4) * byte)
             .noteOff(CHANNEL, idx + 36)
             .then(resolve);
          }
