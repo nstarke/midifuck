@@ -2,6 +2,8 @@ var JZZ = require('jzz');
 var fs = require('fs');
 const { parseArgs } = require('node:util');
 let map = new Array(64).fill(0);
+const CHANNEL = 1;
+
 const options = {
    interface: {
       type: 'string',
@@ -67,6 +69,9 @@ setInterval(() => {
    port.send([0xF8]); // MIDI Clock message
  }, tempoInterval);
 
+ // turn off all notes
+port.allNotesOff(CHANNEL);
+
 function play(){
    return new Promise((resolve) => {
       setInterval(() => {
@@ -76,17 +81,17 @@ function play(){
             if (map[idx] === 0) {
                map[idx] = 1;
                console.log('Gate on', idx + 36);
-               port.noteOn(1, idx + 36).then(resolve);
+               port.noteOn(CHANNEL, idx + 36).then(resolve);
             } else {
                map[idx] = 0;
                console.log('Gate off', idx + 36);
-               port.noteOff(1, idx + 36).then(resolve);
+               port.noteOff(CHANNEL, idx + 36).then(resolve);
             }
          } else{
             console.log('Trigger', idx + 36);
-            port.noteOn(1, idx + 36)
+            port.noteOn(CHANNEL, idx + 36)
             .wait( (60 * 1000) / tempo / 16 )
-            .noteOff(1, idx + 36)
+            .noteOff(CHANNEL, idx + 36)
             .then(resolve);
          }
       }, (60 * 1000) / tempo / 8 );
