@@ -56,6 +56,12 @@ if (isNaN(tempo) || tempo <= 0) {
 
 console.log('Tempo:', tempo);
 let counter = 0;
+
+const tempoInterval = 60000 / (bpm * 24); 
+setInterval(() => {
+   port.send([0xF8]); // MIDI Clock message
+ }, tempoInterval);
+ 
 function play(){
    return new Promise((resolve) => {
       setInterval(() => {
