@@ -1,7 +1,6 @@
 var JZZ = require('jzz');
 var fs = require('fs');
 const { parseArgs } = require('node:util');
-let map = new Array(64).fill(0);
 const CHANNEL = 1;
 
 const options = {
@@ -74,40 +73,45 @@ port.allNotesOff(CHANNEL);
 
 function play(lineNum, lineLength, repeats){
    return new Promise((resolve) => {
-      let map = new Array(8).fill(0);
       let lineArray = fileBytes.splice(0, lineLength);
+      let map = new Array(8).fill(0);
       counter = 0;
       setInterval(() => {
+         console.log(lineNum, lineLength, repeats); 
          let byte = lineArray[counter ++ % lineArray.length];
-         const idx = byte % 8;
+         let midiNote = (lineNum * 8) + (byte % 8) + 36;
 
-         if (counter == repeats){
-            map = new Array(8).fill(0);
+         if (counter % repeats == 0){
             lineArray = fileBytes.splice(0, lineLength);
+            map = new Array(8).fill(0);
+            console.log('New Line', lineNum);
          }
 
          if (values.gates) {
             if (map[idx] === 0) {
                map[idx] = 1;
-               console.log('Gate on', (lineNum * 8) + idx + 36);
-               port.noteOn(CHANNEL, idx + 36)
+               console.log('Gate on', midiNote);
+               port.noteOn(CHANNEL, midiNote)
             } else {
                map[idx] = 0;
-               console.log('Gate off', (lineNum * 8) + idx + 36);
-               port.noteOff(CHANNEL, idx + 36)
+               console.log('Gate off', midiNote);
+               port.noteOff(CHANNEL, midiNote);
             }
          } else{
-            console.log('Trigger', (lineNum * 8) + idx + 36);
-            port.noteOn(CHANNEL, (lineNum * 8) +idx + 36)
+            console.log('Trigger', midiNote);
+            port.noteOn(CHANNEL, midiNote)
             .wait((((60 * 1000) / tempo) / 4) * byte)
-            .noteOff(CHANNEL, (lineNum * 8) + idx + 36)
+            .noteOff(CHANNEL, midiNote)
          }
-      }, (60 * 1000) / tempo / 16 );
+      }, (60 * 1000) / tempo / 4 );
    });
 }
 
 const lineLengths = [12, 28, 24, 20, 44, 52, 16, 36]
 
+let players = [];
 for (let i = 0; i < 8; i++){
-   play(i, lineLengths[i], i * 6);
+   players.push(play(i, lineLengths[i], i * 6));
 }
+
+Promise.all(players);
