@@ -41,7 +41,7 @@ JZZ().and(function () {
 });
 
 if (fs.existsSync(values.filePath)) {
-   fileBytes = fs.readFileSync(values.filePath);
+   fileBytes = Array.from(fs.readFileSync(values.filePath));
 } else {
    console.log('File not found');
    process.exit(1);
@@ -72,29 +72,42 @@ setInterval(() => {
  // turn off all notes
 port.allNotesOff(CHANNEL);
 
-function play(){
+function play(lineNum, lineLength, repeats){
    return new Promise((resolve) => {
+      let map = new Array(8).fill(0);
+      let lineArray = fileBytes.splice(0, lineLength);
+      counter = 0;
       setInterval(() => {
-         let byte = fileBytes[counter ++ % fileBytes.length];
-         const idx = byte % 64;
+         let byte = lineArray[counter ++ % lineArray.length];
+         const idx = byte % 8;
+
+         if (counter == repeats){
+            map = new Array(8).fill(0);
+            lineArray = fileBytes.splice(0, lineLength);
+         }
+
          if (values.gates) {
             if (map[idx] === 0) {
                map[idx] = 1;
-               console.log('Gate on', idx + 36);
-               port.noteOn(CHANNEL, idx + 36).then(resolve);
+               console.log('Gate on', (lineNum * 8) + idx + 36);
+               port.noteOn(CHANNEL, idx + 36)
             } else {
                map[idx] = 0;
-               console.log('Gate off', idx + 36);
-               port.noteOff(CHANNEL, idx + 36).then(resolve);
+               console.log('Gate off', (lineNum * 8) + idx + 36);
+               port.noteOff(CHANNEL, idx + 36)
             }
          } else{
-            console.log('Trigger', idx + 36);
-            port.noteOn(CHANNEL, idx + 36)
+            console.log('Trigger', (lineNum * 8) + idx + 36);
+            port.noteOn(CHANNEL, (lineNum * 8) +idx + 36)
             .wait((((60 * 1000) / tempo) / 4) * byte)
-            .noteOff(CHANNEL, idx + 36)
-            .then(resolve);
+            .noteOff(CHANNEL, (lineNum * 8) + idx + 36)
          }
-      }, (60 * 1000) / tempo / 8 );
+      }, (60 * 1000) / tempo / 16 );
    });
 }
-play();
+
+const lineLengths = [12, 28, 24, 20, 44, 52, 16, 36]
+
+for (let i = 0; i < 8; i++){
+   play(i, lineLengths[i], i * 6);
+}
