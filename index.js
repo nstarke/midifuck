@@ -88,12 +88,12 @@ function play(lineNum, lineLength, repeats){
          }
 
          if (values.gates) {
-            if (map[idx] === 0) {
-               map[idx] = 1;
+            if (map[byte % 8] === 0) {
+               map[byte % 8] = 1;
                console.log('Gate on', midiNote);
                port.noteOn(CHANNEL, midiNote)
             } else {
-               map[idx] = 0;
+               map[byte % 8] = 0;
                console.log('Gate off', midiNote);
                port.noteOff(CHANNEL, midiNote);
             }
